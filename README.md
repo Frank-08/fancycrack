@@ -15,7 +15,6 @@ A polished, static demo app to crack hash digests with a dictionary or small bru
 Open `index.html` directly in a modern browser or serve the directory:
 
 ```bash
-cd /home/jacob/Documents/SRC/fancycrack
 python -m http.server 8000
 # then open http://localhost:8000
 ```
