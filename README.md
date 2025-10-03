@@ -23,7 +23,7 @@ Repo: [Frank-08/fancycrack](https://github.com/Frank-08/fancycrack)
 
 Wordlists: [kkrypt0nn/wordlists](https://github.com/kkrypt0nn/wordlists)
 
-A-Z, a-z,0-9: [ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqustuvwxyz0123456789]
+A-Z, a-z,0-9: ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqustuvwxyz0123456789
 
 ## Demo
 
