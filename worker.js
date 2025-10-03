@@ -21,8 +21,8 @@ self.onmessage = async (event) => {
       const { algorithm, targetHash, candidates } = payload;
       await runDictionary(algorithm, targetHash, candidates);
     } else if (type === 'start-bruteforce') {
-      const { algorithm, targetHash, charset, maxLength } = payload;
-      await runBruteforce(algorithm, targetHash, charset, maxLength);
+      const { algorithm, targetHash, charset, minLength, maxLength } = payload;
+      await runBruteforce(algorithm, targetHash, charset, minLength || 1, maxLength);
     }
   } catch (err) {
     self.postMessage({ type: 'error', payload: { message: (err && err.message) || String(err) } });
@@ -60,7 +60,7 @@ async function runDictionary(algorithm, targetHex, candidates) {
   self.postMessage({ type: 'result', payload: { found: false, plaintext: null, tried } });
 }
 
-async function runBruteforce(algorithm, targetHex, charset, maxLength) {
+async function runBruteforce(algorithm, targetHex, charset, minLength, maxLength) {
   const characters = Array.from(new Set(charset.split('')));
   let tried = 0;
   const batchSize = 1000;
@@ -68,7 +68,8 @@ async function runBruteforce(algorithm, targetHex, charset, maxLength) {
   let lastTried = 0;
   recentRing = [];
 
-  for (let length = 1; length <= maxLength; length++) {
+  const startLen = Math.max(1, minLength || 1);
+  for (let length = startLen; length <= maxLength; length++) {
     const indices = new Array(length).fill(0);
     while (true) {
       if (cancelRequested) return;

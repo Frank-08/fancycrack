@@ -71,10 +71,18 @@
                   <label class="label"><span class="label-text-alt">Leave empty for default lowercase letters + digits</span></label>
                 </div>
 
-                <div class="form-control bruteforce-only hidden">
-                  <label class="label"><span class="label-text">Max Length</span></label>
-                  <input id="maxLength" type="number" min="1" max="7" value="5" class="input input-bordered" />
-                  <label class="label"><span class="label-text-alt">Keep small for demos; grows exponentially</span></label>
+                <div class="grid grid-cols-2 gap-4 bruteforce-only hidden">
+                  <div class="form-control">
+                    <label class="label"><span class="label-text">Min Length</span></label>
+                    <input id="minLength" type="number" min="1" max="7" value="1" class="input input-bordered" />
+                  </div>
+                  <div class="form-control">
+                    <label class="label"><span class="label-text">Max Length</span></label>
+                    <input id="maxLength" type="number" min="1" max="7" value="5" class="input input-bordered" />
+                  </div>
+                  <div class="col-span-2">
+                    <label class="label"><span class="label-text-alt">Keep small for demos; grows exponentially</span></label>
+                  </div>
                 </div>
               </div>
 

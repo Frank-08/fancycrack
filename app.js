@@ -6,6 +6,7 @@ const elements = {
   targetHash: document.getElementById('targetHash'),
   wordlist: document.getElementById('wordlist'),
   charset: document.getElementById('charset'),
+  minLength: document.getElementById('minLength'),
   maxLength: document.getElementById('maxLength'),
   startBtn: document.getElementById('startBtn'),
   cancelBtn: document.getElementById('cancelBtn'),
@@ -99,10 +100,14 @@ elements.startBtn.addEventListener('click', async () => {
     worker.postMessage({ type: 'start-dictionary', payload: { algorithm, targetHash, candidates: lines } });
   } else {
     const charset = (elements.charset.value || 'abcdefghijklmnopqrstuvwxyz0123456789');
-    const maxLength = Math.max(1, Math.min(7, parseInt(elements.maxLength.value || '5', 10)));
-    totalCandidatesPlanned = estimateTotal(charset.length, maxLength);
-    printTerminal(`> mode: bruteforce, alg: ${algorithm}, charset: ${charset.length} chars, maxLen: ${maxLength}`);
-    worker.postMessage({ type: 'start-bruteforce', payload: { algorithm, targetHash, charset, maxLength } });
+    let minLength = Math.max(1, Math.min(7, parseInt(elements.minLength?.value || '1', 10)));
+    let maxLength = Math.max(1, Math.min(7, parseInt(elements.maxLength.value || '5', 10)));
+    if (minLength > maxLength) {
+      const t = minLength; minLength = maxLength; maxLength = t;
+    }
+    totalCandidatesPlanned = estimateTotalRange(charset.length, minLength, maxLength);
+    printTerminal(`> mode: bruteforce, alg: ${algorithm}, charset: ${charset.length} chars, len: ${minLength}-${maxLength}`);
+    worker.postMessage({ type: 'start-bruteforce', payload: { algorithm, targetHash, charset, minLength, maxLength } });
   }
 });
 
@@ -169,9 +174,9 @@ function wireWorker(w) {
   };
 }
 
-function estimateTotal(charsetLen, maxLen) {
+function estimateTotalRange(charsetLen, minLen, maxLen) {
   let total = 0;
-  for (let len = 1; len <= maxLen; len++) {
+  for (let len = minLen; len <= maxLen; len++) {
     total += Math.pow(charsetLen, len);
   }
   return total;
