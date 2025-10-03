@@ -21,6 +21,8 @@ python -m http.server 8000
 
 Repo: [Frank-08/fancycrack](https://github.com/Frank-08/fancycrack)
 
+Wordlists: [kkrypt0nn/wordlists](https://github.com/kkrypt0nn/wordlists)
+
 ## Demo
 
 - Click "Demo Data" to auto-fill the SHA-256 hash for `password`
