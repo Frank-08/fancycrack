@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FancyCrack - Hash Cracker Demo</title>
+    <meta name="description" content="A polished demo UI for hash cracking (dictionary or small brute-force) using Web Workers.">
+    <!-- Tailwind CSS + DaisyUI via CDN for a polished look -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#7c3aed' } } } };</script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      html, body { height: 100%; }
+      body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
+    </style>
+  </head>
+  <body data-theme="dark" class="min-h-full bg-base-200">
+    <header class="navbar bg-base-100 shadow">
+      <div class="flex-1">
+        <span class="btn btn-ghost normal-case text-xl">FancyCrack</span>
+      </div>
+      <div class="flex-none">
+        <a href="https://github.com/" target="_blank" class="btn btn-ghost">GitHub</a>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 max-w-5xl">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Controls Card -->
+        <section class="lg:col-span-2">
+          <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+              <h2 class="card-title">Crack Settings</h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                  <label class="label"><span class="label-text">Mode</span></label>
+                  <select id="mode" class="select select-bordered">
+                    <option value="dictionary">Dictionary</option>
+                    <option value="bruteforce">Brute-force</option>
+                  </select>
+                </div>
+
+                <div class="form-control">
+                  <label class="label"><span class="label-text">Algorithm</span></label>
+                  <select id="algorithm" class="select select-bordered">
+                    <option value="SHA-1">SHA-1</option>
+                    <option value="SHA-256" selected>SHA-256</option>
+                    <option value="SHA-384">SHA-384</option>
+                    <option value="SHA-512">SHA-512</option>
+                  </select>
+                </div>
+
+                <div class="form-control md:col-span-2">
+                  <label class="label"><span class="label-text">Target Hash</span></label>
+                  <input id="targetHash" type="text" placeholder="e.g. 5e884898da28047151d0e56f8dc62927..." class="input input-bordered w-full" />
+                  <label class="label"><span class="label-text-alt">Paste the hex digest of the target hash</span></label>
+                </div>
+
+                <div class="form-control dictionary-only">
+                  <label class="label"><span class="label-text">Dictionary Wordlist</span></label>
+                  <input id="wordlist" type="file" accept=".txt" class="file-input file-input-bordered w-full" />
+                  <label class="label"><span class="label-text-alt">Text file with one candidate per line</span></label>
+                </div>
+
+                <div class="form-control bruteforce-only hidden">
+                  <label class="label"><span class="label-text">Charset</span></label>
+                  <input id="charset" type="text" class="input input-bordered" placeholder="abc... (default: a-z0-9)" />
+                  <label class="label"><span class="label-text-alt">Leave empty for default lowercase letters + digits</span></label>
+                </div>
+
+                <div class="form-control bruteforce-only hidden">
+                  <label class="label"><span class="label-text">Max Length</span></label>
+                  <input id="maxLength" type="number" min="1" max="7" value="5" class="input input-bordered" />
+                  <label class="label"><span class="label-text-alt">Keep small for demos; grows exponentially</span></label>
+                </div>
+              </div>
+
+              <div class="mt-4 flex gap-3">
+                <button id="startBtn" class="btn btn-primary">Start</button>
+                <button id="cancelBtn" class="btn btn-ghost">Cancel</button>
+                <button id="demoBtn" class="btn btn-outline">Demo Data</button>
+              </div>
+
+              <div class="divider my-6">Hash Tool</div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div class="form-control md:col-span-2">
+                  <label class="label"><span class="label-text">Plaintext to Hash</span></label>
+                  <input id="hashPlain" type="text" class="input input-bordered w-full" placeholder="Type text to hash" />
+                </div>
+                <div class="form-control">
+                  <button id="hashBtn" class="btn">Hash Input</button>
+                </div>
+              </div>
+              <div class="mt-2">
+                <div class="badge badge-outline">Digest (hex)</div>
+                <div id="hashOutput" class="mt-2 p-3 bg-base-200 rounded text-xs break-all">—</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Status Card -->
+        <aside>
+          <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+              <h2 class="card-title">Status</h2>
+
+              <div class="stats stats-vertical shadow w-full">
+                <div class="stat">
+                  <div class="stat-title">Progress</div>
+                  <div id="progressText" class="stat-value text-primary">0%</div>
+                  <div id="throughputText" class="stat-desc">0 c/s</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-title">Tried</div>
+                  <div id="triedText" class="stat-value">0</div>
+                  <div class="stat-desc">candidates</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-title">Elapsed</div>
+                  <div id="elapsedText" class="stat-value">0.0s</div>
+                </div>
+              </div>
+
+              <progress id="progressBar" class="progress progress-primary w-full mt-4" value="0" max="100"></progress>
+
+              <div class="mt-4">
+                <div class="badge badge-outline">Speed</div>
+                <div class="mt-2 flex items-center gap-3">
+                  <input id="speedRange" type="range" min="0" max="1000" step="10" value="0" class="range range-primary" />
+                </div>
+                <div class="mt-1 text-xs opacity-70">
+                  Delay per attempt: <span id="delayLabel">0</span> ms
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <div class="badge badge-outline">Result</div>
+                <div id="resultBox" class="mt-2 p-3 bg-base-200 rounded text-sm break-all">—</div>
+              </div>
+
+              <div class="mt-4">
+                <div class="badge badge-outline">Terminal</div>
+                <div class="mt-2 h-56 bg-black rounded overflow-auto border border-base-300">
+                  <pre id="terminalLog" class="p-3 text-green-400 text-xs leading-5 font-mono whitespace-pre-wrap"></pre>
+                </div>
+              </div>
+
+              <div class="mt-2 text-xs opacity-70">
+                For safety and performance, this demo supports SHA-1/256/384/512 and small brute-force ranges only. Use responsibly.
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="footer items-center p-4 bg-base-100 text-base-content">
+      <aside class="grid-flow-col items-center">
+        <span class="font-semibold">FancyCrack</span>
+        <p class="opacity-70">Web Worker demo • No server required</p>
+      </aside>
+    </footer>
+
+    <!-- Full-screen Terminal Overlay -->
+    <div id="overlay" class="fixed inset-0 hidden z-50">
+      <div class="absolute inset-0 bg-black/95"></div>
+      <div class="relative w-full h-full flex flex-col">
+        <div class="flex items-center justify-between px-4 py-3 bg-base-300/20">
+          <div class="text-xs text-neutral-content">FancyCrack • Live Session</div>
+          <button id="overlayClose" class="btn btn-xs btn-ghost">Hide</button>
+        </div>
+        <div class="flex-1 overflow-auto">
+          <pre id="overlayLog" class="p-4 text-green-400 text-xl leading-8 font-mono whitespace-pre-wrap"></pre>
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js" defer></script>
+  </body>
+  </html>
+
+
