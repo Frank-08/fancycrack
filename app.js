@@ -156,6 +156,7 @@ function wireWorker(w) {
         finalize(`FOUND: ${plaintext}`);
         printTerminal(`> FOUND -> ${plaintext}`);
         printOverlay(`> FOUND -> ${plaintext}`);
+        try { celebrate(); } catch (_) {}
       } else {
         finalize('Not found');
         printTerminal('> not found in search space.');
@@ -289,6 +290,17 @@ function printOverlay(line) {
   elements.overlayLog.textContent += `${line}\n`;
   const scroller = elements.overlayLog.parentElement;
   if (scroller) scroller.scrollTop = scroller.scrollHeight;
+}
+
+// Celebration (confetti bursts)
+function celebrate() {
+  if (typeof confetti !== 'function') return;
+  const duration = 1200;
+  const end = Date.now() + duration;
+  (function frame() {
+    confetti({ particleCount: 40, spread: 70, origin: { y: 0.6 } });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  })();
 }
 
 // Recent tries UI (legacy list, unused when terminal is present)
