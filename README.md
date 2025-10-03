@@ -20,6 +20,8 @@ python -m http.server 8000
 # then open http://localhost:8000
 ```
 
+Repo: [Frank-08/fancycrack](https://github.com/Frank-08/fancycrack)
+
 ## Demo
 
 - Click "Demo Data" to auto-fill the SHA-256 hash for `password`
